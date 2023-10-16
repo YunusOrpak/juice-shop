@@ -13,7 +13,7 @@ const db = require('../data/mongodb')
 module.exports = function trackOrder () {
   return (req: Request, res: Response) => {
     const id = utils.disableOnContainerEnv() ? String(req.params.id).replace(/[^\w-]+/g, '') : req.params.id
-    
+
     const cleanedId = utils.sanitizeInput(id)
 
     challengeUtils.solveIf(challenges.reflectedXssChallenge, () => { return utils.contains(cleanedId, '<iframe src="javascript:alert(`xss`)">') })
