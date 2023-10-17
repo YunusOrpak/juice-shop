@@ -14,12 +14,15 @@ module.exports = function trackOrder () {
   return (req: Request, res: Response) => {
     const id = utils.disableOnContainerEnv() ? String(req.params.id).replace(/[^\w-]+/g, '') : req.params.id
 
-    challengeUtils.solveIf(challenges.reflectedXssChallenge, () => { return utils.contains(id, '<iframe src="javascript:alert(`xss`)">') })
-    db.orders.find({ $where: `this.orderId === '${id}'` }).then((order: any) => {
+    const cleanedId = utils.sanitizeInput(id)
+
+    challengeUtils.solveIf(challenges.reflectedXssChallenge, () => { return utils.contains(cleanedId, '<iframe src="javascript:alert(`xss`)">') })
+
+    db.orders.find({ orderId: cleanedId }).then((order: any) => {
       const result = utils.queryResultToJson(order)
       challengeUtils.solveIf(challenges.noSqlOrdersChallenge, () => { return result.data.length > 1 })
       if (result.data[0] === undefined) {
-        result.data[0] = { orderId: id }
+        result.data[0] = { orderId: cleanedId }
       }
       res.json(result)
     }, () => {
